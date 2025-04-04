@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importation CSV</title>
+</head>
+<body>
+    <h2>Importer un fichier CSV</h2>
+
+    <!-- Affichage d'un message d'erreur si quelque chose ne va pas -->
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+
+    <!-- Formulaire d'importation de fichier -->
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}  <!-- Affichage du formulaire sous forme de paragraphes -->
+        <button type="submit">Importer</button>
+    </form>
+    
+    <!-- Lien pour retourner à l'accueil ou à une autre page -->
+    <br>
+    <a href="/">Retour à l'accueil</a>
+</body>
+</html>

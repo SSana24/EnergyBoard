@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Liste des données énergétiques</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #007bff;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .filter-form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .filter-form select, .filter-form button {
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Liste des données énergétiques</h2>
+    <form method="GET">
+        <label for="year">Année :</label>
+        <input type="text" name="year" value="{{ selected_year }}">
+        
+        <label for="region">Région :</label>
+        <input type="text" name="region" value="{{ selected_region }}">
+        
+        <button type="submit">Filtrer</button>
+    </form>
+
+    <table border="1">
+        <tr>
+            <th>Date</th>
+            <th>Région</th>
+            <th>Consommation (TWh)</th>
+        </tr>
+    </tr>
+    {% for entry in page_obj %}
+    <tr>
+        <td>{{ entry.date.year }}</td>
+        <td>{{ entry.region }}</td>
+        <td>{{ entry.consumption_twh }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="3">Aucune donnée disponible.</td>
+    </tr>
+    {% endfor %}
+        <div style="text-align: center; margin-top: 20px;">
+            {% if data.has_previous %}
+                <a href="?page=1">Première</a>
+                <a href="?page={{ data.previous_page_number }}">Précédente</a>
+            {% endif %}
+        
+            {% if data.has_next %}
+                <a href="?page={{ data.next_page_number }}">Suivante</a>
+                <a href="?page={{ data.paginator.num_pages }}">Dernière</a>
+            {% endif %}
+        </div>
+        
+    </table>
+    <h2>Consommation par Région</h2>
+    <canvas id="regionChart"></canvas>
+    
+    <script>
+        var regionLabels = [];
+        var regionData = [];
+    
+        {% for entry in consumption_by_region %}
+            regionLabels.push("{{ entry.region|escapejs }}");
+            regionData.push({{ entry.total_consumption|default:0 }});
+        {% endfor %}
+    
+        var ctx = document.getElementById("regionChart").getContext("2d");
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: regionLabels,
+                datasets: [{
+                    label: "Consommation (TWh)",
+                    data: regionData,
+                    backgroundColor: "rgba(54, 162, 235, 0.6)",
+                    borderColor: "rgba(54, 162, 235, 1)",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: "Consommation (TWh)"
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Régions"
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    <h2>Consommation en France par Année</h2>
+    <canvas id="yearChart"></canvas>
+    
+    <script>
+        var yearLabels = [];
+        var yearData = [];
+    
+        {% for entry in consumption_by_year %}
+            yearLabels.push("{{ entry.date__year|escapejs }}");
+            yearData.push({{ entry.total_consumption|default:0 }});
+        {% endfor %}
+    
+        var ctx2 = document.getElementById("yearChart").getContext("2d");
+        new Chart(ctx2, {
+            type: "line",
+            data: {
+                labels: yearLabels,
+                datasets: [{
+                    label: "Consommation (TWh)",
+                    data: yearData,
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 2,
+                    fill: false
+                }]
+            }
+        });
+    </script>
+    <br>
+    <a href="/upload/">Retour à l'importation</a>
+    <div>
+        {% if page_obj.has_previous %}
+            <a href="?page=1&year={{ selected_year }}&region={{ selected_region }}"><< Première</a>
+            <a href="?page={{ page_obj.previous_page_number }}&year={{ selected_year }}&region={{ selected_region }}">Précédente</a>
+        {% endif %}
+    
+        <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+    
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&year={{ selected_year }}&region={{ selected_region }}">Suivante</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&year={{ selected_year }}&region={{ selected_region }}">Dernière >></a>
+        {% endif %}
+    </div>
+</body>
+</html>
